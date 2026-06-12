@@ -125,6 +125,16 @@ POST /scheduled-tasks/manage   { name, prompt, schedule, agentId, enabled }
 
 ⚠️ Param is **`taskId`** (not `id` like other endpoints). Requires Control Hub access (any non-guest org role).
 
+### Build an app (dashboards / mini-tools)
+
+Aster **Apps** are published React mini-apps (dashboards, tools) that read your org's data. **App authoring is agent-driven, not a direct endpoint** — there's no "POST app source" API; the platform compiles and publishes server-side through the `manage_apps` tool. So to build an app from the outside:
+
+1. Create (or reuse) an agent with the **`manage_apps`** tool attached (`GET /tools` → copy its def into the agent's `tools`).
+2. **Invoke it via `POST /chat`** with what you want: *"Build an app named Sales Dashboard that charts this month's pipeline from knowledge base 123."* The agent writes the code and publishes it (`manage_apps action=create` / `load_to_sandbox` → `publish_from_sandbox`). Verified: this produces a real published app you can then read.
+3. **Read/manage the result via the Apps API**: `GET /apps/manage` (list, or `?id=N` for one), `PATCH /apps/manage` (metadata), `DELETE /apps/manage?id=N`. The published app renders at `/apps/{id}`.
+
+For apps that need data wrangling, give the agent `execute_python` too. Iterate by invoking the same agent again ("change the chart to a table") — it updates the app.
+
 ### Package a skill
 
 Skills = a `SKILL.md` (YAML frontmatter with `name` required + `description`) plus up to 20 bundled files.

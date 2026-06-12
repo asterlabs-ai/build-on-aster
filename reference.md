@@ -300,6 +300,24 @@ Query: `taskId` (optional filter), `limit` (default 50), `stats` (bool), `since`
 
 ---
 
+## Apps
+
+Aster Apps are published React mini-apps that read org data. **Authoring is agent-only** — there is no HTTP endpoint that accepts app source and publishes it. The platform compiles + publishes server-side via the `manage_apps` agent tool. To build an app via the API, invoke an agent that has `manage_apps` through `POST /chat` (see SKILL.md "Build an app"). The HTTP endpoints below are for **reading/managing** existing apps.
+
+### GET /apps/manage — List apps (or get one)
+No params → `{ success: true, apps: App[] }`. `?id=N` → a single app. Verified `200` with an API key.
+App object includes `id`, `name`, `createdByUserId`, `createdAt`, version info, lock state. The published app renders at `/apps/{id}`.
+
+### PATCH /apps/manage — Update app metadata
+Body includes `id`. Updates app-level metadata (not the code — code changes go through the agent/`manage_apps`). `404` if not found.
+
+### DELETE /apps/manage?id={id} — Delete an app
+Soft-delete. Locked apps (author-locked) return `403` unless you're the author or an org admin.
+
+> Other `/apps/*` routes (`data`, `files`, `styles`, `bundle`) serve a published app's data and assets for rendering — you generally don't call them directly.
+
+---
+
 ## Tools
 
 ### GET /tools — Tool catalog
