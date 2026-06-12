@@ -84,7 +84,7 @@ Body:
 | `extractionModel` | string\|null | no | Model for structured data extraction from files |
 | `extractionSchema` | object\|null | no | **JSON Schema** defining what structured data to extract per file |
 | `source` | string\|null | no | e.g. `"salesforce"`. Marks KB integration-managed: UI upload/delete disabled, API access unrestricted. |
-| `trigger` | object | no | `{ enabled: bool, agentId: int (same org), prompt: string }` — runs the agent automatically when new files are added; `prompt` is appended after document context. |
+| `trigger` | object | no | `{ enabled: bool, agentId: int (same org), prompt: string }` — runs the agent automatically once a new file finishes processing. ⚠️ The agent receives file **metadata** (File ID, name, content type, size, chunk count, KB id) followed by your `prompt` — **NOT the document content**. Give the trigger agent `read_kb_file` (the prompt includes the File ID to pass it) or `search_knowledge_base` with this KB in `accessibleKnowledgeBaseIds`, or it will be blind to the document. The run is `serviceSource: "kb-trigger"`; its threadId lands on the file's `triggerConversationId`. |
 
 Response `201`: `{ success: true, knowledgeBase: KnowledgeBase }`.
 Errors `400`: `"Knowledge base name is required"`, `"A knowledge base with this name already exists"`, `"Embedding model is required"`.

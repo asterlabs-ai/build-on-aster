@@ -65,7 +65,7 @@ Then point an agent at it via `search_knowledge_base.config.accessibleKnowledgeB
 
 **Extraction schemas** (optional, set at KB create/update): a JSON Schema of fields to pull from every file into structured `extractedData` — use when the user will ask aggregate questions across many similar documents (invoices, CIMs, reports). Set `extractionModel` too or nothing extracts.
 
-**KB triggers**: `trigger: { enabled, agentId, prompt }` on the KB runs an agent automatically on every new file — the building block for "process each incoming document" pipelines.
+**KB triggers**: `trigger: { enabled, agentId, prompt }` on the KB runs an agent automatically on every new file — the building block for "process each incoming document" pipelines. **The trigger passes the agent file *metadata* (including the File ID) + your prompt, not the document text** — so the trigger agent must have `read_kb_file` or `search_knowledge_base` (with this KB in `accessibleKnowledgeBaseIds`) or it can't see the document. Verified: a tool-less trigger agent replies "I don't have access to the contents"; the same agent with `read_kb_file` reads and summarizes it correctly.
 
 ### Invoke an agent (run it, not just build it)
 
