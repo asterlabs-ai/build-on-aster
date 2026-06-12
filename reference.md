@@ -27,6 +27,8 @@ Agent object fields: `id` (int), `name` (string), `description` (string|null), `
 ### POST /agents — Create or update an agent
 One endpoint for both: **omit `id` to create, include `id` to update**. There is no clone endpoint — clone by GET-ing the original, editing the payload, and POSTing without `id`.
 
+**Update semantics (verified against `api/agents.ts`):** with `id`, the body is validated as a *partial* (`updateAgentSchema = insertAgentSchema.partial()`) and only the columns you send are written — `POST /agents { id, systemPrompt }` changes just the prompt. **Two exceptions reset to defaults when omitted:** `stage` → `"development"` and `showInChat` → `true` (the handler force-sets `stage: stage || "development"` and Zod injects `showInChat: true`). `tagIds` is left alone when omitted. **Safe pattern: read-modify-write** — GET the agent, mutate, POST back with `id` and the unchanged `stage`/`showInChat`. `name` is still required on every call (including updates).
+
 Body fields (only `name` is required, for both create and update):
 | Field | Type | Required | Notes |
 |---|---|---|---|

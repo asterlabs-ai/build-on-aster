@@ -33,8 +33,22 @@ You are helping someone build on the [Aster Agents](https://www.asteragents.com)
    ```
    Per-tool `config` is where cross-references live: `accessibleKnowledgeBaseIds` (search_knowledge_base, numbers), `writableKnowledgeBaseIds` (write_to_knowledge_base, numbers), `callableAgentIds` (call_agent, **strings**), `skillIds` (load_skill).
 3. `POST /agents` with `name` (the only required field), `systemPrompt`, `model` (full `provider:model-id` string — check `/features/choosing-a-model.md` for current IDs), `tools`, `conversationStarters`, `stage` (`development` until tested, then `released`), `showInChat`.
-4. **Update = same endpoint with `id`.** `GET /agents` → find the agent → modify the payload → `POST /agents` including `id`. There is no PATCH; send the full object.
-5. **Clone pattern**: GET the source agent, strip `id` and `emailSlug`, edit, POST.
+4. **Update = same endpoint with `id`.** Include `id` and the API updates only the fields you send (it's a real partial update) — *except* for two fields that reset to their defaults when omitted, see the next rule. **Always read-modify-write**: `GET /agents` → take the live object → change the field(s) you want → `POST /agents` with `id` and the unchanged `stage`/`showInChat` echoed back. This is the safe pattern, especially when scripting across many agents.
+5. **Two fields silently reset on update if omitted** — burned into the platform's create-or-update path: **`stage`** snaps back to `development` and **`showInChat`** snaps back to `true`. So a bare `POST /agents { id, systemPrompt }` will un-hide hidden agents and demote released ones. Echo both fields on every update. (`tagIds`, by contrast, is left untouched when omitted — only send it when you mean to change tags.)
+6. **Clone pattern**: GET the source agent, strip `id` and `emailSlug`, edit, POST.
+
+### Maintain agents across many organizations
+
+Each API key is scoped to **one** org — there is no cross-org admin endpoint. Fleet management = **one key per org + a loop you run client-side.** Keep a map of `{ orgName → apiKey }` (each from that org's Control Hub → Settings → API Access) and iterate.
+
+Common patterns, all built from the endpoints above:
+
+- **Push a prompt/tool change to the same agent in every org.** For each org: `GET /agents` → match the agent by `name` (ids differ per org) → mutate `systemPrompt`/`tools` → `POST /agents` with `id` **and the echoed `stage`/`showInChat`**. Treat one canonical definition as the source of truth and render per-org diffs before writing.
+- **Roll out a brand-new agent to N orgs.** Maintain the definition once (a JSON or a small builder), then `POST /agents` (no `id`) into each org. Re-running becomes an update once you capture the returned `id` per org.
+- **Refresh tool *schemas* after the platform ships tool updates.** `POST /agents/sync-tools` (admin) updates every agent in that org to the latest tool definitions while preserving each tool's `config` (`accessibleKnowledgeBaseIds`, `callableAgentIds`, …). Run it per org; it does not touch prompts.
+- **Track drift.** Because updates are full read-modify-write, you can snapshot every org's agents (`GET /agents`) into version control and diff over time — the closest thing to a config-as-code workflow for an agent fleet.
+
+Keys live ~6 months and are per-user/per-org; rotate them in Control Hub and never commit them. When `GET`/`POST` 401s for one org, that org's key is bad — skip it and report, don't abort the whole sweep.
 
 ### Stand up a knowledge base with documents
 
@@ -104,6 +118,7 @@ Attach to an agent via the `load_skill` tool with `config.skillIds`. Update SKIL
 - **`callableAgentIds` are strings; `accessibleKnowledgeBaseIds` are numbers.** Yes, really.
 - **`embeddingModel` cannot change after KB creation** — pick deliberately (`openai:text-embedding-3-small` is the safe default).
 - **`POST /agents` returns 200 on create** (not 201) and is create-or-update by presence of `id` — a forgotten `id` silently creates a duplicate agent instead of updating.
+- **Update is partial EXCEPT `stage` and `showInChat`, which reset to defaults (`development` / `true`) when omitted.** Echo them on every update or you'll demote released agents and un-hide hidden ones. `tagIds` omitted = tags preserved.
 - **`GET /agents` and `GET /agent-tags` return bare JSON arrays**, not `{ data: [...] }` wrappers; most other endpoints wrap (`{ success, knowledgeBases }`, `{ tools, total }`).
 - **`emailSlug` is globally unique and validated** (lowercase, hyphens, reserved words rejected) — leave it off on clones.
 - **Soft deletes everywhere**: deleting agents/KBs/skills hides them but conversations and files persist server-side. Treat deletes as irreversible from the API's perspective anyway.
