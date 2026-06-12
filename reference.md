@@ -252,10 +252,16 @@ Query: `threadId` (uuid string, **required**). Conversation must belong to your 
 
 Response `200`:
 - `id` (uuid), `agentId` (int), `userId`, `organizationId` (string|null), `name` (string|null), `upstreamConversationId` (uuid|null — parent for branched conversations), `renderedSystemPrompt` (string|null — the system prompt actually used, for audit), `streamStatus`, `createdAt`/`updatedAt` (ISO), `deletedAt` (ISO|null), `isDeleted` (bool, present/true if soft-deleted)
-- `messages`: ordered array of `{ id (uuid), role: "user"|"assistant"|"system", parts: MessagePart[] }`
-- MessagePart: `{ type: "text"|"tool-invocation"|"tool-result"|"file", text?, toolInvocation?: { toolCallId, toolName, args }, result?, file?: { name, contentType, url } }`
+- `messages`: ordered array of `{ id (uuid), role: "user"|"assistant"|"system", parts: MessagePart[], usage?, finishReason? }`. On assistant messages, `usage` is per-message token counts (`{ inputTokens, outputTokens, totalTokens, cachedInputTokens, reasoningTokens }`) and `finishReason` is e.g. `"stop"` / `"tool-calls"`.
+- **MessagePart (AI SDK v5 — verified against live output):** the `type` field discriminates the shape:
+  - **text**: `{ type: "text", text }`. Text may contain citation markdown links `[label](cite:<fileId>)` where `<fileId>` is a KB file id you can match against a tool part's `output.content.results[].fileId`.
+  - **tool call**: `{ type: "tool-<toolName>", toolCallId, state, input, output }` — the type is **dynamic**, e.g. `tool-search_knowledge_base` (NOT a static `tool-invocation`/`tool-result`). `input` is the args the model passed; `output` (present once `state` is `output-available`) is the tool's return, typically `{ status, content }`. One part carries both call and result.
+  - **step marker**: `{ type: "step-start" }` (delimits reasoning/tool steps).
+  - **file**: `{ type: "file", name, contentType, url }`.
 
 `streamStatus` values: `in_progress` (generating), `completed`, `stopped` (manually stopped), `error`, `timeout`, `null` (no active stream).
+
+> ⚠️ Known quirks (live-verified 2026-06): assistant-message `createdAt` currently serializes to `{}` (don't rely on it; use the conversation's `updatedAt`). Citation link formats vary by model (`[cite:<id>]` vs `[label](cite:<id>)`); always resolve `<id>` via the tool `output` rather than parsing the label.
 
 Errors: `400` `"threadId is required"`, `404` `"Conversation not found"` (or wrong org), `405` `"Method not allowed"` (non-GET).
 
