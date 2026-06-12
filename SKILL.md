@@ -7,6 +7,20 @@ description: Build, run, and automate on the Aster Agents platform via its REST 
 
 You are helping someone build on the [Aster Agents](https://www.asteragents.com) platform from the outside — using their organization's API key, not platform-internal access. Everything here works with a standard API key; no database or internal tooling required.
 
+## First: make sure there's an API key
+
+Before calling anything, confirm an API key is available — this is the one prerequisite.
+
+1. Look for `ASTER_API_KEY` in the environment. **If it's missing, stop and walk the user through getting one:** Control Hub → **Settings → API Access** at [asteragents.com](https://www.asteragents.com) → copy the key (a 6-month, org-scoped bearer token), then `export ASTER_API_KEY="<key>"`. Never hardcode or commit it.
+2. Verify it works before building anything:
+   ```bash
+   curl -s https://www.asteragents.com/api/agents -H "Authorization: Bearer $ASTER_API_KEY" | head
+   ```
+   A JSON array of agents means you're connected. A `401` means the key is missing/expired/wrong — have the user mint a fresh one (don't retry).
+3. The key is scoped to **one** organization. To work across several orgs, the user needs one key per org (see "Maintain agents across many organizations").
+
+Once the key is set and verified, follow the workflows below.
+
 ## Ground rules
 
 1. **Base URL**: `https://www.asteragents.com/api`
