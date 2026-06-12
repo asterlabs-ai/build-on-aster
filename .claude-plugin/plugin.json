@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "build-on-aster",
+  "displayName": "Build on Aster",
+  "version": "0.1.0",
+  "description": "Build, run, and automate agents on the Aster Agents platform via its public REST API using your org API key.",
+  "author": {
+    "name": "Aster Labs",
+    "email": "support@asteragents.com",
+    "url": "https://www.asteragents.com"
+  },
+  "homepage": "https://docs.asteragents.com",
+  "repository": "https://github.com/asterlabs-ai/build-on-aster",
+  "license": "MIT",
+  "keywords": ["aster", "agents", "api", "automation", "knowledge-base"],
+  "skills": ["./"]
+}

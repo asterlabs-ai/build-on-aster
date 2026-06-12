@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "aster",
+  "description": "Official Aster Labs marketplace — skills for building and automating on the Aster Agents platform.",
+  "owner": {
+    "name": "Aster Labs",
+    "email": "support@asteragents.com",
+    "url": "https://www.asteragents.com"
+  },
+  "plugins": [
+    {
+      "name": "build-on-aster",
+      "source": "./",
+      "description": "Build, run, and automate agents on the Aster Agents platform via its public REST API using your org API key.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Aster Labs",
+        "url": "https://www.asteragents.com"
+      },
+      "keywords": ["aster", "agents", "api", "automation"]
+    }
+  ]
+}

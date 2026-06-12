@@ -14,19 +14,26 @@ It knows the platform's real contracts (verified against the implementation, not
 
 ## Install
 
-Clone into your Claude Code skills directory:
+This repo is a Claude Code **plugin marketplace**. From inside Claude Code:
 
-```bash
-# Project-scoped (this repo only)
-git clone https://github.com/asterlabs-ai/build-on-aster .claude/skills/build-on-aster
-
-# Or user-scoped (every project)
-git clone https://github.com/asterlabs-ai/build-on-aster ~/.claude/skills/build-on-aster
+```
+/plugin marketplace add asterlabs-ai/build-on-aster
+/plugin install build-on-aster@aster
 ```
 
-Claude Code discovers the skill automatically from the `name`/`description` in `build-on-aster/SKILL.md`.
+Or from the command line:
 
-> Using a different AI coding tool? Point it at `build-on-aster/SKILL.md` as context — it's plain Markdown with a companion `reference.md`.
+```bash
+claude plugin marketplace add asterlabs-ai/build-on-aster
+claude plugin install build-on-aster@aster
+```
+
+`/plugin update` pulls new versions as they ship. Claude invokes the skill automatically when a task involves managing or running an Aster org; you can also call it explicitly with `/build-on-aster:build-on-aster`.
+
+> **Prefer a plain skill?** Clone the repo and point any SKILL.md-aware tool at `SKILL.md` (it's plain Markdown with a companion `reference.md`):
+> ```bash
+> git clone https://github.com/asterlabs-ai/build-on-aster ~/.claude/skills/build-on-aster
+> ```
 
 ## Get an API key
 
@@ -53,8 +60,9 @@ A JSON array of your org's agents means you're connected.
 
 | File | Purpose |
 |---|---|
-| `build-on-aster/SKILL.md` | The teaching layer — workflows, behavioral rules, and gotchas |
-| `build-on-aster/reference.md` | Full endpoint reference — exact request/response shapes for every operation |
+| `SKILL.md` | The teaching layer — workflows, behavioral rules, and gotchas |
+| `reference.md` | Full endpoint reference — exact request/response shapes for every operation |
+| `.claude-plugin/` | Plugin + marketplace manifests (`plugin.json`, `marketplace.json`) |
 
 For agent-building concepts (prompting, model choice, tools, knowledge bases), the skill points your assistant at the live docs: [docs.asteragents.com](https://docs.asteragents.com).
 
