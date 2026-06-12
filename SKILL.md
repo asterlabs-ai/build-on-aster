@@ -104,7 +104,26 @@ Prerequisites that bite: the org must have an API key for the agent's **model pr
 
 `GET /getConversation?threadId=<uuid>` returns the full message history (`messages[].parts` with text, tool invocations, tool results) plus `streamStatus`. Thread IDs come from `POST /chat`, the Aster UI URL, or wherever the conversation was initiated. `renderedSystemPrompt` on the response is the exact prompt the agent ran with — useful for debugging behavior.
 
-Server-side invocation paths that need no polling loop and run on their own: **scheduled tasks**, **email-to-agent** (`emailSlug`), and **KB triggers**. Reach for these when the work is recurring or event-driven rather than request/response.
+Server-side invocation paths that need no polling loop and run on their own: **scheduled tasks** (below), **email-to-agent** (`emailSlug`), and **KB triggers**. Reach for these when the work is recurring or event-driven rather than request/response.
+
+### Schedule an agent to run on its own
+
+To run an agent on a recurring cadence — "summarize new docs every Monday," "weekly portfolio digest" — create a **scheduled task**. No polling, no server you run; the platform fires it on a cron.
+
+```
+POST /scheduled-tasks/manage   { name, prompt, schedule, agentId, enabled }
+  → 201  the created task   (schedule is a cron expression in UTC, e.g. "0 13 * * 1" = Mondays 13:00 UTC)
+```
+
+`prompt` is the message the agent receives each run; `agentId` must be an agent in your org (else `404`). Then:
+
+- `GET /scheduled-tasks/manage` — list your tasks (bare array; `?taskId=N` for one).
+- `PUT /scheduled-tasks/manage?taskId=N` — update any subset of fields (partial).
+- `POST /scheduled-tasks/toggle` `{ taskId, enabled }` — enable/disable without a full update.
+- `DELETE /scheduled-tasks/manage?taskId=N` — soft-delete (→ `204`).
+- `GET /scheduled-tasks/executions?taskId=N` — run history; each row has the `conversationId` of that run, so you can `GET /getConversation` to read exactly what the agent did. `?stats=true` returns `{ total, completed, failed, in_progress }`.
+
+⚠️ Param is **`taskId`** (not `id` like other endpoints). Requires Control Hub access (any non-guest org role).
 
 ### Package a skill
 

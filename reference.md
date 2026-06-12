@@ -267,6 +267,39 @@ Errors: `400` `"threadId is required"`, `404` `"Conversation not found"` (or wro
 
 ---
 
+## Scheduled Tasks
+
+Run an agent automatically on a cron schedule. All endpoints require **Control Hub access** (any non-guest org role) and are org-scoped. ⚠️ The id query param here is **`taskId`**, not `id` like everywhere else. Verified live against `api/scheduled-tasks/*`.
+
+### GET /scheduled-tasks/manage — List tasks (or get one)
+- No params → **bare JSON array** of the caller's tasks. `?allInOrg=true` (admins) → all tasks in the org.
+- `?taskId=N` → a single task object (`404` if not found).
+
+Task object: `id`, `name`, `description|null`, `prompt`, `schedule` (cron string, UTC), `enabled` (bool), `agentId`, `agentName`, `userId`, `lastRunAt` (ISO|null), `createdAt`/`updatedAt` (ISO).
+
+### POST /scheduled-tasks/manage — Create a task
+Body: `{ name (≤100 chars), prompt, schedule, agentId, description?, enabled? (default true) }`. `prompt` is the message the agent gets each run; `schedule` is a cron expression in **UTC** (e.g. `"0 13 * * 1"` = Mondays 13:00 UTC). The agent must belong to your org.
+Response `201`: the created task (`{ id, name, description, prompt, schedule, enabled, createdAt }`).
+Errors: `400` validation (`{ error: "Validation error", details: [...] }`), `404` `"Agent not found"`.
+
+### PUT /scheduled-tasks/manage?taskId={id} — Update a task
+Query `taskId` required. Body: any subset of `{ name, description, prompt, schedule, agentId, enabled }` (true partial update). Non-admins can only edit their own tasks.
+Response `200`: updated task. Errors: `400` (missing taskId / validation), `403` (not your task), `404` (task or agent not found).
+
+### DELETE /scheduled-tasks/manage?taskId={id} — Delete a task
+Soft-delete + disables it. Non-admins only their own. Response `204` (no content). Errors: `400`, `403`, `404`.
+
+### POST /scheduled-tasks/toggle — Enable/disable
+Body: `{ taskId (int), enabled (bool) }`. Idempotent — returns success even if already in that state.
+Response `200`: `{ id, enabled, ... }`. Errors: `400` (bad body), `403`, `404`.
+
+### GET /scheduled-tasks/executions — Run history / stats
+Query: `taskId` (optional filter), `limit` (default 50), `stats` (bool), `since` (ISO).
+- Default → array of executions, each with a `conversationId` (the run's thread — fetch with `GET /getConversation` to see exactly what the agent did).
+- `?stats=true` → `{ total, completed, failed, in_progress }`.
+
+---
+
 ## Tools
 
 ### GET /tools — Tool catalog
